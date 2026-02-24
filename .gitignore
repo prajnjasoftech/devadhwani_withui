@@ -1,0 +1,11 @@
+/vendor/
+/node_modules/
+/public/storage
+/storage/*.key
+.env
+.env.backup
+/.idea
+/.vscode
+composer.lock
+npm-debug.log
+yarn-error.log

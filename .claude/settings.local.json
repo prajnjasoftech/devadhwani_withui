@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(php artisan:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(Select-Object -Last 20)",
+      "Bash(php:*)",
+      "Bash(del C:wamp64wwwdevadhwanidevadhwani_apitest_search.php)"
+    ]
+  }
+}
