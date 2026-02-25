@@ -116,7 +116,7 @@ class PanchangController extends Controller
             try {
                 $calendarData = $service->getCalendar($date, $timezone);
                 $calendar = $calendarData['data']['calendar_date'];
-                $formattedDate = $calendar['month_name'].' '.$calendar['id'].', '.$calendar['year'];
+                $formattedDate = $calendar['month_name'].' '.$calendar['day'].', '.$calendar['year'];
             } catch (\Exception $e) {
                 Log::info('Calendar API error: '.$e->getMessage());
             }
