@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreMemberRequest;
+use App\Http\Requests\UpdateMemberRequest;
 use App\Models\Member;
 use App\Models\Role;
+use App\Services\MemberService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,6 +15,13 @@ use Inertia\Response;
 
 class MemberController extends Controller
 {
+    protected MemberService $memberService;
+
+    public function __construct(MemberService $memberService)
+    {
+        $this->memberService = $memberService;
+    }
+
     public function index(Request $request): Response
     {
         $temple = auth()->user();
@@ -19,7 +29,7 @@ class MemberController extends Controller
         $query = Member::with('temple')
             ->where('temple_id', $temple->id);
 
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -48,26 +58,14 @@ class MemberController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreMemberRequest $request): RedirectResponse
     {
         $temple = auth()->user();
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'phone' => 'required|string|max:15|unique:members,phone,NULL,id,temple_id,'.$temple->id,
-            'email' => 'nullable|email|max:100',
-            'role_id' => 'nullable|exists:roles,id',
-        ]);
+        $data = $request->validated();
+        $data['temple_id'] = $temple->id;
 
-        $validated['temple_id'] = $temple->id;
-
-        // Get role name if role_id is provided
-        if (! empty($validated['role_id'])) {
-            $role = Role::find($validated['role_id']);
-            $validated['role'] = $role?->role_name;
-        }
-
-        Member::create($validated);
+        $this->memberService->create($data);
 
         return redirect()->route('members.index')->with('success', 'Member created successfully.');
     }
@@ -75,7 +73,12 @@ class MemberController extends Controller
     public function edit($id): Response
     {
         $temple = auth()->user();
-        $member = Member::where('temple_id', $temple->id)->findOrFail($id);
+        $member = $this->memberService->findForTemple($id, $temple->id);
+
+        if (! $member) {
+            abort(404);
+        }
+
         $roles = Role::where('temple_id', $temple->id)->get(['id', 'role_name']);
 
         return Inertia::render('Member/Edit', [
@@ -84,27 +87,16 @@ class MemberController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id): RedirectResponse
+    public function update(UpdateMemberRequest $request, $id): RedirectResponse
     {
         $temple = auth()->user();
-        $member = Member::where('temple_id', $temple->id)->findOrFail($id);
+        $member = $this->memberService->findForTemple($id, $temple->id);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'phone' => 'required|string|max:15|unique:members,phone,'.$id.',id,temple_id,'.$temple->id,
-            'email' => 'nullable|email|max:100',
-            'role_id' => 'nullable|exists:roles,id',
-        ]);
-
-        // Get role name if role_id is provided
-        if (! empty($validated['role_id'])) {
-            $role = Role::find($validated['role_id']);
-            $validated['role'] = $role?->role_name;
-        } else {
-            $validated['role'] = null;
+        if (! $member) {
+            abort(404);
         }
 
-        $member->update($validated);
+        $this->memberService->update($member, $request->validated());
 
         return redirect()->route('members.index')->with('success', 'Member updated successfully.');
     }
@@ -112,9 +104,13 @@ class MemberController extends Controller
     public function destroy($id): RedirectResponse
     {
         $temple = auth()->user();
-        $member = Member::where('temple_id', $temple->id)->findOrFail($id);
+        $member = $this->memberService->findForTemple($id, $temple->id);
 
-        $member->delete();
+        if (! $member) {
+            abort(404);
+        }
+
+        $this->memberService->delete($member);
 
         return redirect()->route('members.index')->with('success', 'Member deleted successfully.');
     }

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Models\Member;
+use App\Http\Requests\StoreRoleRequest;
+use App\Http\Requests\UpdateRoleRequest;
 use App\Models\Role;
+use App\Services\RoleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,6 +14,13 @@ use Inertia\Response;
 
 class RoleController extends Controller
 {
+    protected RoleService $roleService;
+
+    public function __construct(RoleService $roleService)
+    {
+        $this->roleService = $roleService;
+    }
+
     public function index(Request $request): Response
     {
         $temple = auth()->user();
@@ -19,9 +28,8 @@ class RoleController extends Controller
         $query = Role::withCount('members')
             ->where('temple_id', $temple->id);
 
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where('role_name', 'like', "%{$search}%");
+        if ($request->filled('search')) {
+            $query->where('role_name', 'like', "%{$request->search}%");
         }
 
         $roles = $query->orderByDesc('id')->paginate(10)->withQueryString();
@@ -37,22 +45,18 @@ class RoleController extends Controller
     public function create(): Response
     {
         return Inertia::render('Role/Create', [
-            'availablePermissions' => $this->getAvailablePermissions(),
+            'availablePermissions' => $this->roleService->getAvailablePermissions(),
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreRoleRequest $request): RedirectResponse
     {
         $temple = auth()->user();
 
-        $validated = $request->validate([
-            'role_name' => 'required|string|max:100|unique:roles,role_name,NULL,id,temple_id,'.$temple->id,
-            'role' => 'nullable|array',
-        ]);
+        $data = $request->validated();
+        $data['temple_id'] = $temple->id;
 
-        $validated['temple_id'] = $temple->id;
-
-        Role::create($validated);
+        $this->roleService->create($data);
 
         return redirect()->route('roles.index')->with('success', 'Role created successfully.');
     }
@@ -60,25 +64,28 @@ class RoleController extends Controller
     public function edit($id): Response
     {
         $temple = auth()->user();
-        $role = Role::where('temple_id', $temple->id)->findOrFail($id);
+        $role = $this->roleService->findForTemple($id, $temple->id);
+
+        if (! $role) {
+            abort(404);
+        }
 
         return Inertia::render('Role/Edit', [
             'role' => $role,
-            'availablePermissions' => $this->getAvailablePermissions(),
+            'availablePermissions' => $this->roleService->getAvailablePermissions(),
         ]);
     }
 
-    public function update(Request $request, $id): RedirectResponse
+    public function update(UpdateRoleRequest $request, $id): RedirectResponse
     {
         $temple = auth()->user();
-        $role = Role::where('temple_id', $temple->id)->findOrFail($id);
+        $role = $this->roleService->findForTemple($id, $temple->id);
 
-        $validated = $request->validate([
-            'role_name' => 'required|string|max:100|unique:roles,role_name,'.$id.',id,temple_id,'.$temple->id,
-            'role' => 'nullable|array',
-        ]);
+        if (! $role) {
+            abort(404);
+        }
 
-        $role->update($validated);
+        $this->roleService->update($role, $request->validated());
 
         return redirect()->route('roles.index')->with('success', 'Role updated successfully.');
     }
@@ -86,34 +93,21 @@ class RoleController extends Controller
     public function destroy($id): RedirectResponse
     {
         $temple = auth()->user();
-        $role = Role::where('temple_id', $temple->id)->findOrFail($id);
+        $role = $this->roleService->findForTemple($id, $temple->id);
 
-        // Check if role is assigned to any members
-        $membersCount = Member::where('role_id', $id)->count();
-        if ($membersCount > 0) {
-            return redirect()->route('roles.index')->with('error', "Cannot delete role. It is assigned to {$membersCount} member(s).");
+        if (! $role) {
+            abort(404);
         }
 
-        $role->delete();
+        if (! $this->roleService->canDelete($role)) {
+            $count = $this->roleService->getMembersCount($role);
+
+            return redirect()->route('roles.index')
+                ->with('error', "Cannot delete role. It is assigned to {$count} member(s).");
+        }
+
+        $this->roleService->delete($role);
 
         return redirect()->route('roles.index')->with('success', 'Role deleted successfully.');
-    }
-
-    private function getAvailablePermissions(): array
-    {
-        return [
-            'dashboard' => 'Dashboard',
-            'devotees' => 'Devotees Management',
-            'members' => 'Members Management',
-            'roles' => 'Roles Management',
-            'poojas' => 'Poojas Management',
-            'bookings' => 'Bookings Management',
-            'categories' => 'Categories Management',
-            'items' => 'Items Management',
-            'suppliers' => 'Suppliers Management',
-            'purchases' => 'Purchases Management',
-            'reports' => 'Reports',
-            'settings' => 'Settings',
-        ];
     }
 }

@@ -3,50 +3,90 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreRoleRequest;
+use App\Http\Requests\UpdateRoleRequest;
 use App\Models\Role;
-use App\Models\Temple;
+use App\Services\RoleService;
 use Illuminate\Http\Request;
 
 class RoleController extends Controller
 {
+    protected RoleService $roleService;
+
+    public function __construct(RoleService $roleService)
+    {
+        $this->roleService = $roleService;
+    }
+
     /**
-     * List all roles (optional: filter by temple)
+     * List all roles
      */
     public function index(Request $request)
     {
-        $perPage = $request->per_page ?? 10; // default 10
-        if ($request->has('temple_id')) {
-            $roles = Role::where('temple_id', $request->temple_id)->paginate($perPage);
-        } else {
-            $roles = Role::paginate($perPage);
-        }
-        // Pagination params
+        $perPage = min($request->integer('per_page', 10), 50);
 
-        // $role = $query;
-        return response()->json(['status' => true, 'data' => $roles, 'meta' => [
-            'current_page' => $roles->currentPage(),
-            'per_page' => $roles->perPage(),
-            'total' => $roles->total(),
-            'last_page' => $roles->lastPage(),
-        ]]);
+        $query = Role::withCount('members');
+
+        if ($request->has('temple_id')) {
+            $query->where('temple_id', $request->temple_id);
+        }
+
+        if ($request->filled('search')) {
+            $query->where('role_name', 'like', "%{$request->search}%");
+        }
+
+        if ($request->boolean('with_trashed')) {
+            $query->withTrashed();
+        }
+
+        $roles = $query->orderByDesc('id')->paginate($perPage);
+
+        return response()->json([
+            'status' => true,
+            'data' => $roles->items(),
+            'meta' => [
+                'current_page' => $roles->currentPage(),
+                'per_page' => $roles->perPage(),
+                'total' => $roles->total(),
+                'last_page' => $roles->lastPage(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get available permissions
+     */
+    public function permissions()
+    {
+        return response()->json([
+            'status' => true,
+            'data' => $this->roleService->getAvailablePermissions(),
+        ]);
     }
 
     /**
      * Create a new role
      */
-    public function store(Request $request)
+    public function store(StoreRoleRequest $request)
     {
-        $data = $request->validate([
-            'temple_id' => 'required|exists:temples,id',
-            'role_name' => 'nullable|string|max:255',
-            'role' => 'required|array',
-        ]);
+        $data = $request->validated();
 
-        $role = Role::create($data);
+        // Validate permissions if provided
+        if (! empty($data['role'])) {
+            $errors = $this->roleService->validatePermissions($data['role']);
+            if (! empty($errors)) {
+                return response()->json([
+                    'status' => false,
+                    'error' => implode(', ', $errors),
+                ], 422);
+            }
+        }
+
+        $role = $this->roleService->create($data);
 
         return response()->json([
             'status' => true,
-            'message' => 'Role created successfully',
+            'message' => 'Role created successfully.',
             'data' => $role,
         ], 201);
     }
@@ -56,110 +96,113 @@ class RoleController extends Controller
      */
     public function show($id)
     {
-        $role = Role::find($id);
+        $role = Role::withCount('members')->find($id);
 
         if (! $role) {
-            return response()->json(['message' => 'Role not found'], 404);
-        }
-
-        return response()->json($role);
-    }
-
-    /**
-     * Update a role
-     */
-    public function update(Request $request, $id)
-    {
-
-        // ✅ Validate basic input
-        $data = $request->validate([
-            'temple_id' => 'required|exists:temples,id',
-            'role_name' => 'nullable|string|max:255',
-            'role' => 'required|array',
-        ]);
-        $role = Role::find($id);
-        if (! $role) {
-            return response()->json(['message' => 'Role not found'], 404);
-        }
-        // ✅ Verify temple ownership
-        if ($role->temple_id != $data['temple_id']) {
             return response()->json([
-                'message' => 'Unauthorized temple access.',
-                'expected_temple_id' => $role->temple_id,
-                'provided_temple_id' => $data['temple_id'],
-            ], 403);
+                'status' => false,
+                'message' => 'Role not found.',
+            ], 404);
         }
-
-        // ✅ Define allowed structure
-        $requiredKeys = ['User', 'Role', 'Pooja', 'Settings', 'Events', 'Donations', 'Members'];
-
-        // ✅ Check all required keys exist
-        $missingKeys = array_diff($requiredKeys, array_keys($data['role']));
-        if (! empty($missingKeys)) {
-            return response()->json([
-                'message' => 'Invalid role structure.',
-                'missing_fields' => array_values($missingKeys),
-            ], 422);
-        }
-
-        // ✅ Validate value types
-        foreach ($data['role'] as $key => $value) {
-            if (! is_numeric($value)) {
-                return response()->json([
-                    'message' => "Invalid value for '$key'. Expected numeric value.",
-                    'invalid_field' => $key,
-                    'invalid_value' => $value,
-                ], 422);
-            }
-        }
-        // ✅ Passed validation → Update role
-        $role->update([
-            'role_name' => $data['role_name'] ?? $role->role_name,
-            'role' => $data['role'],
-        ]);
 
         return response()->json([
             'status' => true,
-            'message' => 'Role updated successfully',
             'data' => $role,
         ]);
     }
 
     /**
-     * Soft delete
+     * Update a role
+     */
+    public function update(UpdateRoleRequest $request, $id)
+    {
+        $role = Role::find($id);
+
+        if (! $role) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Role not found.',
+            ], 404);
+        }
+
+        $data = $request->validated();
+
+        // Validate permissions if provided
+        if (! empty($data['role'])) {
+            $errors = $this->roleService->validatePermissions($data['role']);
+            if (! empty($errors)) {
+                return response()->json([
+                    'status' => false,
+                    'error' => implode(', ', $errors),
+                ], 422);
+            }
+        }
+
+        $role = $this->roleService->update($role, $data);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Role updated successfully.',
+            'data' => $role,
+        ]);
+    }
+
+    /**
+     * Soft delete role
      */
     public function destroy($id)
     {
         $role = Role::find($id);
+
         if (! $role) {
-            return response()->json(['message' => 'Role not found'], 404);
+            return response()->json([
+                'status' => false,
+                'message' => 'Role not found.',
+            ], 404);
         }
 
-        $role->delete();
+        if (! $this->roleService->canDelete($role)) {
+            $count = $this->roleService->getMembersCount($role);
 
-        return response()->json(['message' => 'Role deleted successfully']);
+            return response()->json([
+                'status' => false,
+                'message' => "Cannot delete role. It is assigned to {$count} member(s).",
+            ], 400);
+        }
+
+        $this->roleService->delete($role);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Role deleted successfully.',
+        ]);
     }
 
     /**
-     * Trashed roles
+     * Show trashed roles
      */
     public function trashed(Request $request)
     {
+        $perPage = min($request->integer('per_page', 10), 50);
+
         $query = Role::onlyTrashed();
+
         if ($request->has('temple_id')) {
             $query->where('temple_id', $request->temple_id);
         }
-        // Pagination params
-        $perPage = $request->per_page ?? 10; // default 10
-        $role = $query->paginate($perPage);
 
-        return response()->json(['status' => true, 'data' => $role, 'meta' => [
-            'current_page' => $role->currentPage(),
-            'per_page' => $role->perPage(),
-            'total' => $role->total(),
-            'last_page' => $role->lastPage(),
-        ]]);
-        // return response()->json($query->get());
+        $roles = $query->paginate($perPage);
+
+        return response()->json([
+            'status' => true,
+            'data' => $roles->items(),
+            'meta' => [
+                'current_page' => $roles->currentPage(),
+                'per_page' => $roles->perPage(),
+                'total' => $roles->total(),
+                'last_page' => $roles->lastPage(),
+            ],
+        ]);
     }
 
     /**
@@ -167,14 +210,28 @@ class RoleController extends Controller
      */
     public function restore($id)
     {
-        $role = Role::withTrashed()->find($id);
+        $role = $this->roleService->findWithTrashed($id);
+
         if (! $role) {
-            return response()->json(['message' => 'Role not found'], 404);
+            return response()->json([
+                'status' => false,
+                'message' => 'Role not found.',
+            ], 404);
         }
 
-        $role->restore();
+        if (! $role->trashed()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Role is not deleted.',
+            ], 400);
+        }
 
-        return response()->json(['message' => 'Role restored successfully']);
+        $this->roleService->restore($role);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Role restored successfully.',
+        ]);
     }
 
     /**
@@ -182,13 +239,20 @@ class RoleController extends Controller
      */
     public function forceDelete($id)
     {
-        $role = Role::withTrashed()->find($id);
+        $role = $this->roleService->findWithTrashed($id);
+
         if (! $role) {
-            return response()->json(['message' => 'Role not found'], 404);
+            return response()->json([
+                'status' => false,
+                'message' => 'Role not found.',
+            ], 404);
         }
 
-        $role->forceDelete();
+        $this->roleService->forceDelete($role);
 
-        return response()->json(['message' => 'Role permanently deleted']);
+        return response()->json([
+            'status' => true,
+            'message' => 'Role permanently deleted.',
+        ]);
     }
 }

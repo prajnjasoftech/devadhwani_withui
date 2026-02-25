@@ -3,234 +3,245 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Member as MainMember;
+use App\Http\Requests\StoreMemberRequest;
+use App\Http\Requests\UpdateMemberRequest;
+use App\Models\Member;
 use App\Models\Temple;
-use App\Models\Tenant\Member as TenantMember;
+use App\Services\MemberService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 
 class MemberController extends Controller
 {
-    /**
-     * List all members.
-     * If `temple_id` present → use main DB.
-     * If `temple` route param present → use tenant DB.
-     */
-    public function index(Request $request, $temple = null)
+    protected MemberService $memberService;
+
+    public function __construct(MemberService $memberService)
     {
-        if ($temple) {
-            // ✅ Tenant DB
-            $members = TenantMember::all();
-
-            return response()->json(['source' => 'tenant', 'data' => $members]);
-        }
-        // Pagination params
-        $perPage = $request->per_page ?? 10; // default 10
-        // ✅ Main DB
-        //    $members = MainMember::where('temple_id', $request->temple_id)->get();
-        $members = MainMember::where('temple_id', $request->temple_id)->paginate($perPage);
-
-        return response()->json(['source' => 'main', 'data' => $members, 'meta' => [
-            'current_page' => $members->currentPage(),
-            'per_page' => $members->perPage(),
-            'total' => $members->total(),
-            'last_page' => $members->lastPage(),
-        ]]);
+        $this->memberService = $memberService;
     }
 
     /**
-     * Create a member (works for both DBs).
+     * List all members
      */
-    public function store(Request $request, $temple = null)
+    public function index(Request $request)
     {
+        $perPage = min($request->integer('per_page', 10), 50);
 
-        if ($temple) {
-            $data = $request->validate([
-                'name' => 'required|string|max:255',
-                'phone' => 'nullable|string|max:20',
-                'email' => 'nullable|email|max:255',
-                'role' => 'nullable|string|max:255',
-                'role_id' => 'nullable|integer',
-            ]);
+        $query = Member::query();
 
-            // Tenant DB
-            $member = TenantMember::create($data);
-
-            return response()->json(['source' => 'tenant', 'message' => 'Member added (tenant)', 'member' => $member]);
+        if ($request->has('temple_id')) {
+            $query->where('temple_id', $request->temple_id);
         }
 
-        $validator = Validator::make($request->all(), [
-            'temple_id' => 'nullable|integer',
-            'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'role' => 'nullable|string|max:255',
-            'role_id' => 'nullable|integer',
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->boolean('with_trashed')) {
+            $query->withTrashed();
+        }
+
+        $members = $query->orderByDesc('id')->paginate($perPage);
+
+        return response()->json([
+            'status' => true,
+            'data' => $members->items(),
+            'meta' => [
+                'current_page' => $members->currentPage(),
+                'per_page' => $members->perPage(),
+                'total' => $members->total(),
+                'last_page' => $members->lastPage(),
+            ],
         ]);
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'errors' => $validator->errors(),
-                'error' => collect($validator->errors()->all())->implode(', '),
-            ], 422);
-        }
-        $data = $request->validate([
-            'temple_id' => 'nullable|integer',
-            'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'role' => 'nullable|string|max:255',
-            'role_id' => 'nullable|integer',
-        ]);
-        // Ensure this phone exists in either temples or members, but not both
-        $templeExists = Temple::where('phone', $request->phone)->exists();
-        $memberExists = MainMember::where('phone', $request->phone)->exists();
-
-        if ($templeExists || $memberExists) {
-            return response()->json([
-                'error' => 'Conflict: Phone number exists for both Temple and Member.',
-            ], 409);
-        }
-        // Main DB
-        $member = MainMember::create($data);
-
-        return response()->json(['status' => true, 'message' => 'Supplier/Donor added successfully', 'data' => $member]);
     }
 
     /**
-     * Show a single member.
+     * Create a member
      */
-    public function show($id, Request $request, $temple = null)
+    public function store(StoreMemberRequest $request)
     {
-        if ($temple) {
-            $member = TenantMember::find($id);
-            if (! $member) {
-                return response()->json(['message' => 'Tenant member not found'], 404);
-            }
+        $data = $request->validated();
 
-            return response()->json(['source' => 'tenant', 'data' => $member]);
-        }
-
-        $member = MainMember::find($id);
-        if (! $member) {
-            return response()->json(['message' => 'Main member not found'], 404);
-        }
-
-        return response()->json(['status' => true, 'message' => 'Supplier/Donor Listed successfully', 'data' => $member]);
-    }
-
-    /**
-     * Update member.
-     */
-    public function update(Request $request, $id, $temple = null)
-    {
-
-        $validator = Validator::make($request->all(), [
-            'temple_id' => 'nullable|integer',
-            'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'role' => 'nullable|string|max:255',
-            'role_id' => 'nullable|integer',
-        ]);
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'errors' => $validator->errors(),
-                'error' => collect($validator->errors()->all())->implode(', '),
-            ], 422);
-        }
-        $data = $request->validate([
-            'temple_id' => 'nullable|integer',
-            'name' => 'sometimes|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'role' => 'nullable|string|max:255',
-            'role_id' => 'nullable|integer',
-        ]);
-        // Ensure this phone exists in either temples or members, but not both
-        if (isset($data['phone'])) {
-            $memberExists = MainMember::where('phone', $data['phone'])->where('id', '!=', $id)->exists();
-
-            if ($memberExists) {
+        // Check phone conflict with temples
+        if (! empty($data['phone'])) {
+            $templeExists = Temple::where('phone', $data['phone'])->exists();
+            if ($templeExists) {
                 return response()->json([
-                    'error' => 'Conflict: Phone number exists for both Temple and Member.',
+                    'status' => false,
+                    'error' => 'Phone number is already registered as a temple.',
                 ], 409);
             }
         }
-        $model = $temple ? TenantMember::find($id) : MainMember::find($id);
 
-        if (! $model) {
-            return response()->json(['message' => 'Member not found'], 404);
-        }
+        $member = $this->memberService->create($data);
 
-        $model->update($data);
-
-        return response()->json(['status' => true, 'message' => 'Member updated successfully', 'data' => $model]);
+        return response()->json([
+            'status' => true,
+            'message' => 'Member created successfully.',
+            'data' => $member,
+        ], 201);
     }
 
     /**
-     * Soft delete member.
+     * Show a single member
      */
-    public function destroy($id, $temple = null)
+    public function show($id)
     {
-        $model = $temple ? TenantMember::find($id) : MainMember::find($id);
+        $member = $this->memberService->findWithTrashed($id);
 
-        if (! $model) {
-            return response()->json(['message' => 'Member not found'], 404);
+        if (! $member) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Member not found.',
+            ], 404);
         }
 
-        $model->delete();
-
-        return response()->json(['message' => 'Member deleted successfully']);
+        return response()->json([
+            'status' => true,
+            'data' => $member,
+        ]);
     }
 
     /**
-     * Show trashed (deleted) members.
+     * Update member
      */
-    public function trashed($temple = null)
+    public function update(UpdateMemberRequest $request, $id)
     {
-        $members = $temple
-             ? TenantMember::onlyTrashed()->get()
-             : MainMember::onlyTrashed()->get();
+        $member = Member::find($id);
 
-        return response()->json(['source' => $temple ? 'tenant' : 'main', 'data' => $members]);
+        if (! $member) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Member not found.',
+            ], 404);
+        }
+
+        $data = $request->validated();
+
+        // Check phone conflict
+        if (! empty($data['phone'])) {
+            $memberExists = Member::where('phone', $data['phone'])
+                ->where('id', '!=', $id)
+                ->exists();
+
+            if ($memberExists) {
+                return response()->json([
+                    'status' => false,
+                    'error' => 'Phone number is already registered.',
+                ], 409);
+            }
+        }
+
+        $member = $this->memberService->update($member, $data);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Member updated successfully.',
+            'data' => $member,
+        ]);
     }
 
     /**
-     * Restore member.
+     * Soft delete member
      */
-    public function restore($id, $temple = null)
+    public function destroy($id)
     {
-        $model = $temple
-             ? TenantMember::withTrashed()->find($id)
-             : MainMember::withTrashed()->find($id);
+        $member = Member::find($id);
 
-        if (! $model) {
-            return response()->json(['message' => 'Member not found'], 404);
+        if (! $member) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Member not found.',
+            ], 404);
         }
 
-        $model->restore();
+        $this->memberService->delete($member);
 
-        return response()->json(['message' => 'Member restored successfully']);
+        return response()->json([
+            'status' => true,
+            'message' => 'Member deleted successfully.',
+        ]);
     }
 
     /**
-     * Force delete.
+     * Show trashed members
      */
-    public function forceDelete($id, $temple = null)
+    public function trashed(Request $request)
     {
-        $model = $temple
-             ? TenantMember::withTrashed()->find($id)
-             : MainMember::withTrashed()->find($id);
+        $perPage = min($request->integer('per_page', 10), 50);
 
-        if (! $model) {
-            return response()->json(['message' => 'Member not found'], 404);
+        $query = Member::onlyTrashed();
+
+        if ($request->has('temple_id')) {
+            $query->where('temple_id', $request->temple_id);
         }
 
-        $model->forceDelete();
+        $members = $query->paginate($perPage);
 
-        return response()->json(['message' => 'Member permanently deleted']);
+        return response()->json([
+            'status' => true,
+            'data' => $members->items(),
+            'meta' => [
+                'current_page' => $members->currentPage(),
+                'per_page' => $members->perPage(),
+                'total' => $members->total(),
+                'last_page' => $members->lastPage(),
+            ],
+        ]);
+    }
+
+    /**
+     * Restore member
+     */
+    public function restore($id)
+    {
+        $member = $this->memberService->findWithTrashed($id);
+
+        if (! $member) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Member not found.',
+            ], 404);
+        }
+
+        if (! $member->trashed()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Member is not deleted.',
+            ], 400);
+        }
+
+        $this->memberService->restore($member);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Member restored successfully.',
+        ]);
+    }
+
+    /**
+     * Force delete
+     */
+    public function forceDelete($id)
+    {
+        $member = $this->memberService->findWithTrashed($id);
+
+        if (! $member) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Member not found.',
+            ], 404);
+        }
+
+        $this->memberService->forceDelete($member);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Member permanently deleted.',
+        ]);
     }
 }
