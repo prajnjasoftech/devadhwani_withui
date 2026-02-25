@@ -6,9 +6,11 @@ use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\DevoteeController;
 use App\Http\Controllers\Web\ItemController;
+use App\Http\Controllers\Web\MemberController;
 use App\Http\Controllers\Web\PanchangController;
 use App\Http\Controllers\Web\PoojaController;
 use App\Http\Controllers\Web\PurchaseController;
+use App\Http\Controllers\Web\RoleController;
 use App\Http\Controllers\Web\SupplierController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +37,22 @@ Route::middleware(['auth:web'])->group(function () {
     // Temple Profile
     Route::get('/temple/profile', [DashboardController::class, 'templeProfile'])->name('temple.profile');
     Route::put('/temple/profile', [DashboardController::class, 'updateTempleProfile'])->name('temple.profile.update');
+
+    // Members
+    Route::get('/members', [MemberController::class, 'index'])->name('members.index');
+    Route::get('/members/create', [MemberController::class, 'create'])->name('members.create');
+    Route::post('/members', [MemberController::class, 'store'])->name('members.store');
+    Route::get('/members/{id}/edit', [MemberController::class, 'edit'])->name('members.edit');
+    Route::put('/members/{id}', [MemberController::class, 'update'])->name('members.update');
+    Route::delete('/members/{id}', [MemberController::class, 'destroy'])->name('members.destroy');
+
+    // Roles
+    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+    Route::get('/roles/create', [RoleController::class, 'create'])->name('roles.create');
+    Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+    Route::get('/roles/{id}/edit', [RoleController::class, 'edit'])->name('roles.edit');
+    Route::put('/roles/{id}', [RoleController::class, 'update'])->name('roles.update');
+    Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->name('roles.destroy');
 
     // Devotees
     Route::get('/devotees', [DevoteeController::class, 'index'])->name('devotees.index');

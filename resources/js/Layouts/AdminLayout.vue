@@ -38,6 +38,12 @@
                             <span>Members</span>
                         </Link>
                     </li>
+                    <li class="nav-item">
+                        <Link href="/roles" class="nav-link" :class="{ active: isActive('/roles') }">
+                            <i class="bi bi-shield-lock"></i>
+                            <span>Roles</span>
+                        </Link>
+                    </li>
                 </ul>
 
                 <div class="nav-section">Pooja & Bookings</div>

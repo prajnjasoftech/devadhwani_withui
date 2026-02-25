@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Role extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'temple_id',
@@ -19,9 +20,14 @@ class Role extends Model
         'role' => 'array', // automatically cast JSON into PHP array
     ];
 
-    // Relationship
+    // Relationships
     public function temple()
     {
         return $this->belongsTo(Temple::class);
+    }
+
+    public function members()
+    {
+        return $this->hasMany(Member::class, 'role_id');
     }
 }
