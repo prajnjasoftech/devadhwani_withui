@@ -46,7 +46,7 @@ class PanchangController extends Controller
             $calendar = $calendarData['data']['calendar_date'];
 
             $formattedDate = $calendar['month_name']
-                .' '.$calendar['id']
+                .' '.$calendar['day']
                 .', '.$calendar['year'];
         } catch (\Exception $e) {
 

@@ -71,7 +71,7 @@ class ProkeralaService
         $token = $this->getAccessToken();
 
         $response = $this->http()->withToken($token)
-            ->get($this->baseUrl.'/calendar', [
+            ->get($this->baseUrl.'calendar', [
                 'date' => $date,
                 'timezone' => $timezone,
                 'calendar' => 'malayalam',
