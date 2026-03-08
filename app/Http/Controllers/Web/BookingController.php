@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Devotee;
 use App\Models\PaymentDetail;
+use App\Models\TempleDeity;
 use App\Models\TemplePooja;
 use App\Models\TemplePoojaBooking;
 use App\Models\TemplePoojaBookingTracking;
@@ -73,12 +74,16 @@ class BookingController extends Controller
     public function create(): Response
     {
         $temple = auth()->user();
-        $poojas = TemplePooja::where('temple_id', $temple->id)->get(['id', 'pooja_name', 'amount', 'period', 'next_pooja_perform_date']);
+        $poojas = TemplePooja::where('temple_id', $temple->id)->get(['id', 'pooja_name', 'amount', 'period', 'next_pooja_perform_date', 'deity_id']);
         $devotees = Devotee::where('temple_id', $temple->id)->get(['id', 'devotee_name', 'devotee_phone', 'nakshatra']);
+        $deities = TempleDeity::where('temple_id', $temple->id)
+            ->where('is_active', true)
+            ->get(['id', 'name']);
 
         return Inertia::render('Booking/Create', [
             'poojas' => $poojas,
             'devotees' => $devotees,
+            'deities' => $deities,
         ]);
     }
 
@@ -88,6 +93,7 @@ class BookingController extends Controller
 
         $validated = $request->validate([
             'pooja_id' => 'required|exists:temple_poojas,id',
+            'deity_id' => 'nullable|exists:temple_deities,id',
             'devotees' => 'required|array|min:1',
             'devotees.*.devotee_id' => 'nullable|exists:devotees,id',
             'devotees.*.devotee_name' => 'required_without:devotees.*.devotee_id|nullable|string|max:150',
@@ -135,6 +141,7 @@ class BookingController extends Controller
                 $booking = TemplePoojaBooking::create([
                     'temple_id' => $temple->id,
                     'pooja_id' => $validated['pooja_id'],
+                    'deity_id' => $validated['deity_id'] ?? null,
                     'devotee_id' => $devoteeId,
                     'booking_number' => 'BKG-'.strtoupper(Str::random(8)),
                     'receipt_number' => $receiptNumber,
@@ -207,17 +214,21 @@ class BookingController extends Controller
     public function edit($id): Response
     {
         $temple = auth()->user();
-        $booking = TemplePoojaBooking::with(['pooja', 'devotee'])
+        $booking = TemplePoojaBooking::with(['pooja', 'devotee', 'deity'])
             ->where('temple_id', $temple->id)
             ->findOrFail($id);
 
-        $poojas = TemplePooja::where('temple_id', $temple->id)->get(['id', 'pooja_name', 'amount', 'period']);
+        $poojas = TemplePooja::where('temple_id', $temple->id)->get(['id', 'pooja_name', 'amount', 'period', 'deity_id']);
         $devotees = Devotee::where('temple_id', $temple->id)->get(['id', 'devotee_name', 'devotee_phone', 'nakshatra']);
+        $deities = TempleDeity::where('temple_id', $temple->id)
+            ->where('is_active', true)
+            ->get(['id', 'name']);
 
         return Inertia::render('Booking/Edit', [
             'booking' => $booking,
             'poojas' => $poojas,
             'devotees' => $devotees,
+            'deities' => $deities,
         ]);
     }
 

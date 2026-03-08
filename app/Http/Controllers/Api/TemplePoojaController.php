@@ -36,7 +36,7 @@ class TemplePoojaController extends Controller
         }
         // Pagination params
         $perPage = $request->per_page ?? 10; // default 10
-        $poojas = $query->orderByDesc('id')->paginate($perPage);
+        $poojas = $query->with('deity')->orderByDesc('id')->paginate($perPage);
 
         return response()->json(['status' => true, 'data' => $poojas, 'meta' => [
             'current_page' => $poojas->currentPage(),
@@ -56,6 +56,7 @@ class TemplePoojaController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'temple_id' => 'required|integer|exists:temples,id',
+            'deity_id' => 'nullable|integer|exists:temple_deities,id',
             'member_id' => 'nullable|integer|exists:members,id',
             'pooja_name' => 'required|string|max:150',
             'period' => 'required|in:once,daily,monthly,yearly',
@@ -94,7 +95,7 @@ class TemplePoojaController extends Controller
      */
     public function show($id)
     {
-        $pooja = TemplePooja::find($id);
+        $pooja = TemplePooja::with('deity')->find($id);
 
         if (! $pooja) {
             return response()->json([
@@ -125,6 +126,7 @@ class TemplePoojaController extends Controller
 
         $validator = Validator::make($request->all(), [
             'temple_id' => 'sometimes|integer|exists:temples,id',
+            'deity_id' => 'nullable|integer|exists:temple_deities,id',
             'member_id' => 'sometimes|integer|exists:members,id',
             'pooja_name' => 'sometimes|string|max:150',
             'period' => 'sometimes|in:once,daily,monthly,yearly',

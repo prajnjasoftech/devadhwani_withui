@@ -49,6 +49,12 @@
                 <div class="nav-section">Pooja & Bookings</div>
                 <ul class="p-0 mb-4">
                     <li class="nav-item">
+                        <Link href="/deities" class="nav-link" :class="{ active: isActive('/deities') }">
+                            <i class="bi bi-star"></i>
+                            <span>Deities</span>
+                        </Link>
+                    </li>
+                    <li class="nav-item">
                         <Link href="/poojas" class="nav-link" :class="{ active: isActive('/poojas') }">
                             <i class="bi bi-flower1"></i>
                             <span>Poojas</span>

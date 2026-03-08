@@ -77,6 +77,27 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
+                                <label class="form-label">Deity (Optional)</label>
+                                <select
+                                    class="form-control"
+                                    :class="{ 'is-invalid': errors.deity_id }"
+                                    v-model="form.deity_id"
+                                >
+                                    <option value="">None</option>
+                                    <option v-for="deity in deities" :key="deity.id" :value="deity.id">
+                                        {{ deity.name }}
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback" v-if="errors.deity_id">
+                                    {{ errors.deity_id }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
                                 <label class="form-label">Next Pooja Date</label>
                                 <input
                                     type="date"
@@ -142,7 +163,8 @@ import { Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({
-    pooja: Object
+    pooja: Object,
+    deities: Array
 });
 
 const form = reactive({
@@ -151,7 +173,8 @@ const form = reactive({
     amount: props.pooja.amount || '',
     details: props.pooja.details || '',
     devotees_required: props.pooja.devotees_required || false,
-    next_pooja_perform_date: props.pooja.next_pooja_perform_date || ''
+    next_pooja_perform_date: props.pooja.next_pooja_perform_date || '',
+    deity_id: props.pooja.deity_id || ''
 });
 
 const errors = reactive({});

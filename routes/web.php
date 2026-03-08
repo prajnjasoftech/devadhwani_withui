@@ -4,6 +4,7 @@ use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\BookingController;
 use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\DashboardController;
+use App\Http\Controllers\Web\DeityController;
 use App\Http\Controllers\Web\DevoteeController;
 use App\Http\Controllers\Web\ItemController;
 use App\Http\Controllers\Web\MemberController;
@@ -75,6 +76,14 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/poojas/{id}/edit', [PoojaController::class, 'edit'])->name('poojas.edit');
     Route::put('/poojas/{id}', [PoojaController::class, 'update'])->name('poojas.update');
     Route::delete('/poojas/{id}', [PoojaController::class, 'destroy'])->name('poojas.destroy');
+
+    // Deities
+    Route::get('/deities', [DeityController::class, 'index'])->name('deities.index');
+    Route::get('/deities/create', [DeityController::class, 'create'])->name('deities.create');
+    Route::post('/deities', [DeityController::class, 'store'])->name('deities.store');
+    Route::get('/deities/{id}/edit', [DeityController::class, 'edit'])->name('deities.edit');
+    Route::put('/deities/{id}', [DeityController::class, 'update'])->name('deities.update');
+    Route::delete('/deities/{id}', [DeityController::class, 'destroy'])->name('deities.destroy');
 
     // Bookings
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');

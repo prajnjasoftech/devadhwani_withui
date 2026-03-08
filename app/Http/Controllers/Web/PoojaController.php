@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\TempleDeity;
 use App\Models\TemplePooja;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class PoojaController extends Controller
     {
         $temple = auth()->user();
 
-        $query = TemplePooja::where('temple_id', $temple->id);
+        $query = TemplePooja::with('deity')->where('temple_id', $temple->id);
 
         if ($request->has('search') && $request->search) {
             $search = $request->search;
@@ -39,7 +40,14 @@ class PoojaController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Pooja/Create');
+        $temple = auth()->user();
+        $deities = TempleDeity::where('temple_id', $temple->id)
+            ->where('is_active', true)
+            ->get(['id', 'name']);
+
+        return Inertia::render('Pooja/Create', [
+            'deities' => $deities,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -53,6 +61,7 @@ class PoojaController extends Controller
             'details' => 'nullable|string',
             'devotees_required' => 'nullable|boolean',
             'next_pooja_perform_date' => 'nullable|date',
+            'deity_id' => 'nullable|exists:temple_deities,id',
         ]);
 
         $validated['temple_id'] = $temple->id;
@@ -65,10 +74,14 @@ class PoojaController extends Controller
     public function edit($id): Response
     {
         $temple = auth()->user();
-        $pooja = TemplePooja::where('temple_id', $temple->id)->findOrFail($id);
+        $pooja = TemplePooja::with('deity')->where('temple_id', $temple->id)->findOrFail($id);
+        $deities = TempleDeity::where('temple_id', $temple->id)
+            ->where('is_active', true)
+            ->get(['id', 'name']);
 
         return Inertia::render('Pooja/Edit', [
             'pooja' => $pooja,
+            'deities' => $deities,
         ]);
     }
 
@@ -84,6 +97,7 @@ class PoojaController extends Controller
             'details' => 'nullable|string',
             'devotees_required' => 'nullable|boolean',
             'next_pooja_perform_date' => 'nullable|date',
+            'deity_id' => 'nullable|exists:temple_deities,id',
         ]);
 
         $pooja->update($validated);

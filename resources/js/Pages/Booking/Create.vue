@@ -59,6 +59,29 @@
                     </div>
 
                     <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Deity (Optional)</label>
+                                <select
+                                    class="form-control"
+                                    :class="{ 'is-invalid': errors.deity_id, 'auto-filled': deityAutoFilled }"
+                                    v-model="form.deity_id"
+                                    @change="deityAutoFilled = false"
+                                >
+                                    <option value="">None</option>
+                                    <option v-for="deity in deities" :key="deity.id" :value="deity.id">
+                                        {{ deity.name }}
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback" v-if="errors.deity_id">{{ errors.deity_id }}</div>
+                                <div class="form-hint" v-if="deityAutoFilled">
+                                    <i class="bi bi-info-circle"></i> Auto-filled from selected pooja
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label class="form-label">Booking Date *</label>
@@ -284,7 +307,8 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({
     poojas: Array,
-    devotees: Array
+    devotees: Array,
+    deities: Array
 });
 
 const nakshatras = [
@@ -304,6 +328,7 @@ const createEmptyDevotee = () => ({
 
 const form = reactive({
     pooja_id: '',
+    deity_id: '',
     period: 'once',
     booking_date: new Date().toISOString().split('T')[0],
     booking_end_date: '',
@@ -316,6 +341,7 @@ const form = reactive({
 
 const errors = reactive({});
 const processing = ref(false);
+const deityAutoFilled = ref(false);
 
 const periodCount = computed(() => {
     if (form.period === 'once' || !form.booking_date || !form.booking_end_date) {
@@ -399,6 +425,14 @@ const onPoojaChange = () => {
         // Set booking date to pooja's next perform date if available
         if (pooja.next_pooja_perform_date) {
             form.booking_date = pooja.next_pooja_perform_date.split('T')[0];
+        }
+        // Auto-populate deity from pooja if available
+        if (pooja.deity_id) {
+            form.deity_id = pooja.deity_id;
+            deityAutoFilled.value = true;
+        } else {
+            form.deity_id = '';
+            deityAutoFilled.value = false;
         }
     }
 };

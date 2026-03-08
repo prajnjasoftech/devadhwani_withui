@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\PurchaseController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\TempleController;
+use App\Http\Controllers\Api\TempleDeityController;
 use App\Http\Controllers\Api\TemplePoojaBookingController;
 use App\Http\Controllers\Api\TemplePoojaController;
 use App\Http\Controllers\Api\TempleReportController;
@@ -135,6 +136,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/restore', [TemplePoojaController::class, 'restore']);
         Route::delete('/{id}/force', [TemplePoojaController::class, 'forceDelete']);
         Route::get('/trashed', [TemplePoojaController::class, 'trashed']);
+    });
+
+    Route::prefix('temple-deities')->group(function () {
+        Route::get('/', [TempleDeityController::class, 'index']);
+        Route::post('/', [TempleDeityController::class, 'store']);
+        Route::get('/{id}', [TempleDeityController::class, 'show']);
+        Route::put('/{id}', [TempleDeityController::class, 'update']);
+        Route::delete('/{id}', [TempleDeityController::class, 'destroy']);
+
+        // Restore & Force Delete
+        Route::post('/{id}/restore', [TempleDeityController::class, 'restore']);
+        Route::delete('/{id}/force', [TempleDeityController::class, 'forceDelete']);
+        Route::get('/trashed/list', [TempleDeityController::class, 'trashed']);
     });
 
     Route::prefix('purchases')->group(function () {

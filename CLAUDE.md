@@ -16,6 +16,21 @@ app/
 └── Helpers/                 # Helper classes
 ```
 
+## Key Models & Relationships
+
+### Deities, Poojas & Bookings
+- **TempleDeity**: Master table for temple deities (e.g., Lord Ganesha, Lord Shiva)
+- **TemplePooja**: Poojas can optionally have a default deity (`deity_id`)
+- **TemplePoojaBooking**: Bookings can have a deity (`deity_id`)
+  - When a pooja is selected, the deity auto-populates from the pooja's default
+  - User can override the deity in the booking
+
+```
+TempleDeity (1) ──────< TemplePooja (many)
+     │
+     └──────────────< TemplePoojaBooking (many)
+```
+
 ## Key Conventions
 
 ### API Response Format

@@ -1251,6 +1251,165 @@
 			]
 		},
 		{
+			"name": "Temple Deities",
+			"item": [
+				{
+					"name": "List Temple Deities",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/temple-deities",
+							"host": ["{{base_url}}"],
+							"path": ["temple-deities"]
+						},
+						"description": "Get list of all temple deities. Supports filters: temple_id, is_active, search"
+					}
+				},
+				{
+					"name": "Create Temple Deity",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"temple_id\": 1,\n    \"name\": \"Lord Ganesha\",\n    \"description\": \"The remover of obstacles\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/temple-deities",
+							"host": ["{{base_url}}"],
+							"path": ["temple-deities"]
+						},
+						"description": "Create a new deity for a temple"
+					}
+				},
+				{
+					"name": "Get Temple Deity",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/temple-deities/1",
+							"host": ["{{base_url}}"],
+							"path": ["temple-deities", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update Temple Deity",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Lord Ganesha Updated\",\n    \"description\": \"Updated description\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/temple-deities/1",
+							"host": ["{{base_url}}"],
+							"path": ["temple-deities", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Temple Deity",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/temple-deities/1",
+							"host": ["{{base_url}}"],
+							"path": ["temple-deities", "1"]
+						}
+					}
+				},
+				{
+					"name": "List Trashed Temple Deities",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/temple-deities/trashed/list",
+							"host": ["{{base_url}}"],
+							"path": ["temple-deities", "trashed", "list"]
+						}
+					}
+				},
+				{
+					"name": "Restore Temple Deity",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/temple-deities/1/restore",
+							"host": ["{{base_url}}"],
+							"path": ["temple-deities", "1", "restore"]
+						}
+					}
+				},
+				{
+					"name": "Force Delete Temple Deity",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/temple-deities/1/force",
+							"host": ["{{base_url}}"],
+							"path": ["temple-deities", "1", "force"]
+						}
+					}
+				}
+			]
+		},
+		{
 			"name": "Pooja Bookings",
 			"item": [
 				{

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * @property int $id
  * @property int $temple_id
+ * @property int|null $deity_id
  * @property int|null $member_id
  * @property string $pooja_name
  * @property string|null $period
@@ -20,6 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $devotees_required
  * @property \Carbon\Carbon|null $next_pooja_perform_date
  * @property-read Temple $temple
+ * @property-read TempleDeity|null $deity
  * @property-read Member|null $member
  * @property-read Collection<int, TemplePoojaBooking> $bookings
  */
@@ -31,6 +33,7 @@ class TemplePooja extends Model
 
     protected $fillable = [
         'temple_id',
+        'deity_id',
         'member_id',
         'pooja_name',
         'period',
@@ -51,6 +54,14 @@ class TemplePooja extends Model
     public function temple(): BelongsTo
     {
         return $this->belongsTo(Temple::class, 'temple_id');
+    }
+
+    /**
+     * @return BelongsTo<TempleDeity, TemplePooja>
+     */
+    public function deity(): BelongsTo
+    {
+        return $this->belongsTo(TempleDeity::class, 'deity_id');
     }
 
     /**

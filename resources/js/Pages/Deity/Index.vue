@@ -1,11 +1,11 @@
 <template>
     <AdminLayout>
         <div class="page-header">
-            <h1 class="page-title">Poojas</h1>
+            <h1 class="page-title">Deities</h1>
             <div class="page-breadcrumb">
                 <Link href="/dashboard">Home</Link>
                 <i class="bi bi-chevron-right"></i>
-                <span>Poojas</span>
+                <span>Deities</span>
             </div>
         </div>
 
@@ -16,21 +16,19 @@
                         <i class="bi bi-search"></i>
                         <input
                             type="text"
-                            placeholder="Search poojas..."
+                            placeholder="Search deities..."
                             v-model="search"
                             @input="debouncedSearch"
                         >
                     </div>
-                    <select class="form-select" v-model="period" @change="applyFilters" style="width: auto;">
-                        <option value="">All Periods</option>
-                        <option value="once">Once</option>
-                        <option value="daily">Daily</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
+                    <select class="form-select" v-model="status" @change="applyFilters" style="width: auto;">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
                     </select>
                 </div>
-                <Link href="/poojas/create" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Add Pooja
+                <Link href="/deities/create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add Deity
                 </Link>
             </div>
             <div class="card-body p-0">
@@ -38,64 +36,55 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Deity</th>
-                            <th>Period</th>
-                            <th>Amount</th>
-                            <th>Devotees Required</th>
-                            <th>Next Date</th>
+                            <th>Description</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="pooja in poojas.data" :key="pooja.id">
-                            <td class="fw-bold">{{ pooja.pooja_name }}</td>
-                            <td>{{ pooja.deity?.name || '-' }}</td>
+                        <tr v-for="deity in deities.data" :key="deity.id">
+                            <td class="fw-bold">{{ deity.name }}</td>
+                            <td>{{ deity.description ? truncate(deity.description, 50) : '-' }}</td>
                             <td>
-                                <span class="badge" :class="getPeriodClass(pooja.period)">
-                                    {{ pooja.period }}
+                                <span class="badge" :class="deity.is_active ? 'badge-success' : 'badge-secondary'">
+                                    {{ deity.is_active ? 'Active' : 'Inactive' }}
                                 </span>
                             </td>
-                            <td>{{ formatCurrency(pooja.amount) }}</td>
-                            <td>
-                                <i v-if="pooja.devotees_required" class="bi bi-check-circle text-success"></i>
-                                <i v-else class="bi bi-x-circle text-muted"></i>
-                            </td>
-                            <td>{{ pooja.next_pooja_perform_date ? formatDate(pooja.next_pooja_perform_date) : '-' }}</td>
                             <td>
                                 <div class="btn-group">
-                                    <Link :href="`/poojas/${pooja.id}/edit`" class="btn btn-sm btn-secondary">
+                                    <Link :href="`/deities/${deity.id}/edit`" class="btn btn-sm btn-secondary">
                                         <i class="bi bi-pencil"></i>
                                     </Link>
-                                    <button class="btn btn-sm btn-danger" @click="confirmDelete(pooja)">
+                                    <button class="btn btn-sm btn-danger" @click="confirmDelete(deity)">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
                             </td>
                         </tr>
-                        <tr v-if="poojas.data.length === 0">
-                            <td colspan="7" class="text-center text-muted py-4">
-                                No poojas found
+                        <tr v-if="deities.data.length === 0">
+                            <td colspan="4" class="text-center text-muted py-4">
+                                No deities found
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="card-footer" v-if="poojas.last_page > 1">
+            <div class="card-footer" v-if="deities.last_page > 1">
                 <div class="pagination">
                     <button
                         class="btn btn-sm btn-secondary"
-                        :disabled="poojas.current_page === 1"
-                        @click="goToPage(poojas.current_page - 1)"
+                        :disabled="deities.current_page === 1"
+                        @click="goToPage(deities.current_page - 1)"
                     >
                         <i class="bi bi-chevron-left"></i>
                     </button>
                     <span class="pagination-info">
-                        Page {{ poojas.current_page }} of {{ poojas.last_page }}
+                        Page {{ deities.current_page }} of {{ deities.last_page }}
                     </span>
                     <button
                         class="btn btn-sm btn-secondary"
-                        :disabled="poojas.current_page === poojas.last_page"
-                        @click="goToPage(poojas.current_page + 1)"
+                        :disabled="deities.current_page === deities.last_page"
+                        @click="goToPage(deities.current_page + 1)"
                     >
                         <i class="bi bi-chevron-right"></i>
                     </button>
@@ -107,17 +96,17 @@
         <div class="modal-overlay" v-if="showDeleteModal" @click="showDeleteModal = false">
             <div class="modal-content" @click.stop>
                 <div class="modal-header">
-                    <h3>Delete Pooja</h3>
+                    <h3>Delete Deity</h3>
                     <button class="btn-close" @click="showDeleteModal = false">
                         <i class="bi bi-x"></i>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to delete <strong>{{ poojaToDelete?.pooja_name }}</strong>?</p>
+                    <p>Are you sure you want to delete <strong>{{ deityToDelete?.name }}</strong>?</p>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @click="showDeleteModal = false">Cancel</button>
-                    <button class="btn btn-danger" @click="deletePooja">Delete</button>
+                    <button class="btn btn-danger" @click="deleteDeity">Delete</button>
                 </div>
             </div>
         </div>
@@ -130,14 +119,14 @@ import { Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({
-    poojas: Object,
+    deities: Object,
     filters: Object
 });
 
 const search = ref(props.filters?.search || '');
-const period = ref(props.filters?.period || '');
+const status = ref(props.filters?.status || '');
 const showDeleteModal = ref(false);
-const poojaToDelete = ref(null);
+const deityToDelete = ref(null);
 
 let searchTimeout = null;
 
@@ -149,58 +138,37 @@ const debouncedSearch = () => {
 };
 
 const applyFilters = () => {
-    router.get('/poojas', {
+    router.get('/deities', {
         search: search.value || undefined,
-        period: period.value || undefined,
+        status: status.value || undefined,
     }, { preserveState: true });
 };
 
 const goToPage = (page) => {
-    router.get('/poojas', {
+    router.get('/deities', {
         page,
         search: search.value || undefined,
-        period: period.value || undefined,
+        status: status.value || undefined,
     }, { preserveState: true });
 };
 
-const confirmDelete = (pooja) => {
-    poojaToDelete.value = pooja;
+const confirmDelete = (deity) => {
+    deityToDelete.value = deity;
     showDeleteModal.value = true;
 };
 
-const deletePooja = () => {
-    router.delete(`/poojas/${poojaToDelete.value.id}`, {
+const deleteDeity = () => {
+    router.delete(`/deities/${deityToDelete.value.id}`, {
         onSuccess: () => {
             showDeleteModal.value = false;
-            poojaToDelete.value = null;
+            deityToDelete.value = null;
         }
     });
 };
 
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        maximumFractionDigits: 0
-    }).format(value);
-};
-
-const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-    });
-};
-
-const getPeriodClass = (period) => {
-    const classes = {
-        once: 'badge-secondary',
-        daily: 'badge-primary',
-        monthly: 'badge-success',
-        yearly: 'badge-warning'
-    };
-    return classes[period] || 'badge-secondary';
+const truncate = (text, length) => {
+    if (text.length <= length) return text;
+    return text.substring(0, length) + '...';
 };
 </script>
 

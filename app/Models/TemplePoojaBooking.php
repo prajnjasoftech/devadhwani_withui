@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $id
  * @property int $temple_id
  * @property int $pooja_id
+ * @property int|null $deity_id
  * @property int|null $member_id
  * @property int|null $devotee_id
  * @property string $booking_number
@@ -32,6 +33,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property float|null $pooja_amount_total_received
  * @property-read Temple $temple
  * @property-read TemplePooja $pooja
+ * @property-read TempleDeity|null $deity
  * @property-read Member|null $member
  * @property-read Devotee|null $devotee
  * @property-read Collection<int, TemplePoojaBookingTracking> $trackings
@@ -44,6 +46,7 @@ class TemplePoojaBooking extends Model
     protected $fillable = [
         'temple_id',
         'pooja_id',
+        'deity_id',
         'member_id',
         'devotee_id',
         'booking_number',
@@ -89,6 +92,14 @@ class TemplePoojaBooking extends Model
     public function pooja(): BelongsTo
     {
         return $this->belongsTo(TemplePooja::class);
+    }
+
+    /**
+     * @return BelongsTo<TempleDeity, TemplePoojaBooking>
+     */
+    public function deity(): BelongsTo
+    {
+        return $this->belongsTo(TempleDeity::class, 'deity_id');
     }
 
     /**

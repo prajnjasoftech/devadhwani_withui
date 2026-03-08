@@ -36,6 +36,10 @@
                                     <span class="label">Pooja:</span>
                                     <span class="value">{{ booking.pooja?.pooja_name }}</span>
                                 </div>
+                                <div class="info-row" v-if="booking.deity">
+                                    <span class="label">Deity:</span>
+                                    <span class="value">{{ booking.deity?.name }}</span>
+                                </div>
                             </div>
 
                             <div class="section-title mt-4">Update Details</div>
@@ -220,7 +224,8 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 const props = defineProps({
     booking: Object,
     poojas: Array,
-    devotees: Array
+    devotees: Array,
+    deities: Array
 });
 
 const form = reactive({

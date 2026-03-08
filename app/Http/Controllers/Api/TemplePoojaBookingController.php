@@ -63,6 +63,7 @@ class TemplePoojaBookingController extends Controller
             })
             ->with([
                 'pooja',
+                'deity',
                 'member',
                 // IMPORTANT: load ALL trackings (no date filter here)
                 'trackings',
@@ -424,6 +425,7 @@ class TemplePoojaBookingController extends Controller
             $validated = Validator::make($request->all(), [
                 'temple_id' => 'required|exists:temples,id',
                 'pooja_id' => 'required|exists:temple_poojas,id',
+                'deity_id' => 'nullable|exists:temple_deities,id',
                 'member_id' => 'nullable|exists:members,id',
                 'booking_date' => 'required|date',
                 'booking_end_date' => 'nullable|date|after_or_equal:booking_date',
@@ -465,7 +467,7 @@ class TemplePoojaBookingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Booking created successfully',
-                'data' => $booking->load('trackings'),
+                'data' => $booking->load(['trackings', 'deity']),
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -488,6 +490,7 @@ class TemplePoojaBookingController extends Controller
 
             $validated = Validator::make($request->all(), [
                 'temple_id' => 'required|exists:temples,id',
+                'deity_id' => 'nullable|exists:temple_deities,id',
                 'booking_date' => 'sometimes|date',
                 'booking_end_date' => 'sometimes|date|after_or_equal:booking_date',
                 'period' => 'nullable|in:once,daily,monthly,yearly',
@@ -529,7 +532,7 @@ class TemplePoojaBookingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Booking updated successfully',
-                'data' => $booking->load('trackings'),
+                'data' => $booking->load(['trackings', 'deity']),
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
