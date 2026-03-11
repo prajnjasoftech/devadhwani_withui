@@ -23,7 +23,7 @@
                             <i class="bi bi-telephone"></i> {{ devotee.devotee_phone }}
                         </p>
                         <div class="nakshatra-badge" v-if="devotee.nakshatra">
-                            <i class="bi bi-star-fill"></i> {{ devotee.nakshatra }}
+                            <i class="bi bi-star-fill"></i> {{ toMalayalamNakshatra(devotee.nakshatra) }}
                         </div>
                     </div>
                 </div>
@@ -108,6 +108,7 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { toMalayalamNakshatra } from '@/utils/malayalam';
 
 const props = defineProps({
     devotee: Object,

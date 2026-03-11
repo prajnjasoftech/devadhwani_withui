@@ -23,12 +23,23 @@
                                 <i class="bi bi-chevron-right"></i>
                             </button>
                         </div>
-                        <button class="btn btn-sm btn-secondary" @click="goToToday">Today</button>
+                        <button
+                            class="btn btn-sm btn-secondary"
+                            @click="goToToday"
+                        >
+                            Today
+                        </button>
                     </div>
                     <div class="card-body p-0">
                         <div class="calendar">
                             <div class="calendar-header">
-                                <div class="calendar-day-name" v-for="day in dayNames" :key="day">{{ day }}</div>
+                                <div
+                                    class="calendar-day-name"
+                                    v-for="day in dayNames"
+                                    :key="day"
+                                >
+                                    {{ day }}
+                                </div>
                             </div>
                             <div class="calendar-body">
                                 <!-- Empty cells for alignment -->
@@ -43,16 +54,43 @@
                                     :key="day.date"
                                     class="calendar-cell"
                                     :class="{
-                                        'today': day.isToday,
-                                        'has-panchang': day.panchang || fetchedPanchang[day.date],
-                                        'selected': selectedDate === day.date
+                                        today: day.isToday,
+                                        'has-panchang':
+                                            day.panchang ||
+                                            fetchedPanchang[day.date],
+                                        selected: selectedDate === day.date,
                                     }"
                                     @click="selectDate(day)"
                                 >
                                     <div class="cell-date">{{ day.day }}</div>
-                                    <div class="cell-panchang" v-if="day.panchang || fetchedPanchang[day.date]">
-                                        <span class="day-name">{{ (day.panchang || fetchedPanchang[day.date])?.day_name }}</span>
-                                        <span class="tithi">{{ truncate((day.panchang || fetchedPanchang[day.date])?.tithi, 10) }}</span>
+                                    <div
+                                        class="cell-panchang"
+                                        v-if="
+                                            day.panchang ||
+                                            fetchedPanchang[day.date]
+                                        "
+                                    >
+                                        <span class="nakshatra">{{
+                                            truncate(
+                                                toMalayalamNakshatra(
+                                                    (
+                                                        day.panchang ||
+                                                        fetchedPanchang[
+                                                            day.date
+                                                        ]
+                                                    )?.nakshatra,
+                                                ),
+                                                12,
+                                            )
+                                        }}</span>
+                                        <span class="malayalam-date">{{
+                                            toMalayalam(
+                                                (
+                                                    day.panchang ||
+                                                    fetchedPanchang[day.date]
+                                                )?.day_name,
+                                            )
+                                        }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -69,37 +107,65 @@
                     </div>
                     <div class="card-body">
                         <div v-if="loading" class="text-center py-4">
-                            <i class="bi bi-arrow-repeat spin" style="font-size: 2rem;"></i>
+                            <i
+                                class="bi bi-arrow-repeat spin"
+                                style="font-size: 2rem"
+                            ></i>
                             <p class="mt-2">Fetching panchang...</p>
                         </div>
                         <div v-else-if="selectedPanchang">
-                            <div class="panchang-detail" v-if="selectedPanchang.day_name">
-                                <label>Day</label>
-                                <span>{{ selectedPanchang.day_name }}</span>
+                            <div
+                                class="panchang-detail"
+                                v-if="selectedPanchang.day_name"
+                            >
+                                <label>Malayalam Date</label>
+                                <span>{{
+                                    toMalayalam(selectedPanchang.day_name)
+                                }}</span>
                             </div>
                             <div class="panchang-detail">
                                 <label>Tithi</label>
-                                <span>{{ selectedPanchang.tithi || 'N/A' }}</span>
+                                <span>{{
+                                    selectedPanchang.tithi || "N/A"
+                                }}</span>
                             </div>
                             <div class="panchang-detail">
                                 <label>Nakshatra</label>
-                                <span>{{ selectedPanchang.nakshatra || 'N/A' }}</span>
+                                <span>{{
+                                    toMalayalamNakshatra(
+                                        selectedPanchang.nakshatra,
+                                    ) || "N/A"
+                                }}</span>
                             </div>
                             <div class="panchang-detail">
                                 <label>Yoga</label>
-                                <span>{{ selectedPanchang.yoga || 'N/A' }}</span>
+                                <span>{{
+                                    selectedPanchang.yoga || "N/A"
+                                }}</span>
                             </div>
                             <div class="panchang-detail">
                                 <label>Karana</label>
-                                <span>{{ selectedPanchang.karana || 'N/A' }}</span>
+                                <span>{{
+                                    selectedPanchang.karana || "N/A"
+                                }}</span>
                             </div>
                             <div class="panchang-detail">
                                 <label>Sun</label>
-                                <span><i class="bi bi-sunrise"></i> {{ formatTime(selectedPanchang.sunrise) }} - <i class="bi bi-sunset"></i> {{ formatTime(selectedPanchang.sunset) }}</span>
+                                <span
+                                    ><i class="bi bi-sunrise"></i>
+                                    {{ formatTime(selectedPanchang.sunrise) }} -
+                                    <i class="bi bi-sunset"></i>
+                                    {{
+                                        formatTime(selectedPanchang.sunset)
+                                    }}</span
+                                >
                             </div>
                         </div>
                         <div v-else class="text-center text-muted py-4">
-                            <i class="bi bi-calendar-x" style="font-size: 2rem;"></i>
+                            <i
+                                class="bi bi-calendar-x"
+                                style="font-size: 2rem"
+                            ></i>
                             <p class="mt-2">Click to fetch panchang</p>
                         </div>
                     </div>
@@ -115,7 +181,12 @@
                             <i class="bi bi-sun"></i>
                             <div>
                                 <small>Sunrise / Sunset</small>
-                                <strong>{{ formatTime(todayPanchang.sunrise) }} - {{ formatTime(todayPanchang.sunset) }}</strong>
+                                <strong
+                                    >{{ formatTime(todayPanchang.sunrise) }} -
+                                    {{
+                                        formatTime(todayPanchang.sunset)
+                                    }}</strong
+                                >
                             </div>
                         </div>
                         <div class="today-highlight">
@@ -133,15 +204,15 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
-import axios from 'axios';
-import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { ref, computed, reactive, onMounted } from "vue";
+import { Link, router } from "@inertiajs/vue3";
+import axios from "axios";
+import AdminLayout from "@/Layouts/AdminLayout.vue";
 
 const props = defineProps({
     calendarDays: {
         type: Array,
-        default: () => []
+        default: () => [],
     },
     currentMonth: Number,
     currentYear: Number,
@@ -149,17 +220,87 @@ const props = defineProps({
     todayPanchang: Object,
     firstDayOfWeek: {
         type: Number,
-        default: 0
-    }
+        default: 0,
+    },
 });
 
-const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const selectedDate = ref(null);
 const loading = ref(false);
 const fetchedPanchang = reactive({});
 
+// Malayalam month names mapping
+const malayalamMonths = {
+    Chingam: "ചിങ്ങം",
+    Kanni: "കന്നി",
+    Thulam: "തുലാം",
+    Vrischikam: "വൃശ്ചികം",
+    Dhanu: "ധനു",
+    Makaram: "മകരം",
+    Kumbham: "കുംഭം",
+    Meenam: "മീനം",
+    Medam: "മേടം",
+    Edavam: "ഇടവം",
+    Mithunam: "മിഥുനം",
+    Karkidakam: "കർക്കിടകം",
+};
+
+// Malayalam nakshatra names mapping (27 nakshatras)
+const malayalamNakshatras = {
+    Ashwini: "അശ്വതി",
+    Bharani: "ഭരണി",
+    Krittika: "കാർത്തിക",
+    Rohini: "രോഹിണി",
+    Mrigashirsha: "മകയിരം",
+    Ardra: "തിരുവാതിര",
+    Punarvasu: "പുണർതം",
+    Pushya: "പൂയം",
+    Ashlesha: "ആയില്യം",
+    Magha: "മകം",
+    "Purva Phalguni": "പൂരം",
+    "Uttara Phalguni": "ഉത്രം",
+    Hasta: "അത്തം",
+    Chitra: "ചിത്തിര",
+    Swati: "ചോതി",
+    Vishakha: "വിശാഖം",
+    Anuradha: "അനിഴം",
+    Jyeshta: "തൃക്കേട്ട",
+    Moola: "മൂലം",
+    "Purva Ashadha": "പൂരാടം",
+    "Uttara Ashadha": "ഉത്രാടം",
+    Shravana: "തിരുവോണം",
+    Dhanishta: "അവിട്ടം",
+    Shatabhisha: "ചതയം",
+    "Purva Bhadrapada": "പൂരുരുട്ടാതി",
+    "Uttara Bhadrapada": "ഉത്രട്ടാതി",
+    Revati: "രേവതി",
+};
+
+// Convert English month name to Malayalam
+const toMalayalam = (dateStr) => {
+    if (!dateStr) return "";
+    for (const [eng, mal] of Object.entries(malayalamMonths)) {
+        if (dateStr.includes(eng)) {
+            return dateStr.replace(eng, mal);
+        }
+    }
+    return dateStr;
+};
+
+// Convert English nakshatra name to Malayalam
+const toMalayalamNakshatra = (nakshatraStr) => {
+    if (!nakshatraStr) return "";
+    let result = nakshatraStr;
+    for (const [eng, mal] of Object.entries(malayalamNakshatras)) {
+        if (result.includes(eng)) {
+            result = result.replace(eng, mal);
+        }
+    }
+    return result;
+};
+
 // Find today's date and select it by default
-const todayDay = props.calendarDays.find(d => d.isToday);
+const todayDay = props.calendarDays.find((d) => d.isToday);
 if (todayDay) {
     selectedDate.value = todayDay.date;
 }
@@ -180,17 +321,17 @@ const selectedPanchang = computed(() => {
     }
 
     // Check props data
-    const day = props.calendarDays.find(d => d.date === selectedDate.value);
+    const day = props.calendarDays.find((d) => d.date === selectedDate.value);
     return day?.panchang || null;
 });
 
 const selectedDateFormatted = computed(() => {
-    if (!selectedDate.value) return 'Select a date';
-    return new Date(selectedDate.value).toLocaleDateString('en-IN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+    if (!selectedDate.value) return "Select a date";
+    return new Date(selectedDate.value).toLocaleDateString("en-IN", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
     });
 });
 
@@ -206,12 +347,12 @@ const selectDate = async (day) => {
 const fetchPanchang = async (date) => {
     loading.value = true;
     try {
-        const response = await axios.post('/panchang/fetch', { date });
+        const response = await axios.post("/panchang/fetch", { date });
         if (response.data.status && response.data.data) {
             fetchedPanchang[date] = response.data.data;
         }
     } catch (error) {
-        console.error('Failed to fetch panchang:', error);
+        console.error("Failed to fetch panchang:", error);
     } finally {
         loading.value = false;
     }
@@ -224,7 +365,7 @@ const prevMonth = () => {
         month = 12;
         year--;
     }
-    router.get('/panchang', { month, year }, { preserveState: true });
+    router.get("/panchang", { month, year }, { preserveState: true });
 };
 
 const nextMonth = () => {
@@ -234,32 +375,36 @@ const nextMonth = () => {
         month = 1;
         year++;
     }
-    router.get('/panchang', { month, year }, { preserveState: true });
+    router.get("/panchang", { month, year }, { preserveState: true });
 };
 
 const goToToday = () => {
     const now = new Date();
-    router.get('/panchang', {
-        month: now.getMonth() + 1,
-        year: now.getFullYear()
-    }, { preserveState: true });
+    router.get(
+        "/panchang",
+        {
+            month: now.getMonth() + 1,
+            year: now.getFullYear(),
+        },
+        { preserveState: true },
+    );
 };
 
 const truncate = (str, len) => {
-    if (!str) return '';
-    return str.length > len ? str.substring(0, len) + '...' : str;
+    if (!str) return "";
+    return str.length > len ? str.substring(0, len) + "..." : str;
 };
 
 const formatTime = (time) => {
-    if (!time) return 'N/A';
-    if (typeof time === 'string' && time.includes(':')) {
+    if (!time) return "N/A";
+    if (typeof time === "string" && time.includes(":")) {
         try {
             const date = new Date(time);
             if (!isNaN(date)) {
-                return date.toLocaleTimeString('en-IN', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
+                return date.toLocaleTimeString("en-IN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
                 });
             }
         } catch (e) {
@@ -277,15 +422,23 @@ const formatTime = (time) => {
     margin: -0.75rem;
 }
 
-.col-lg-8, .col-lg-4 {
+.col-lg-8,
+.col-lg-4 {
     padding: 0.75rem;
 }
 
-.col-lg-8 { flex: 0 0 66.666%; max-width: 66.666%; }
-.col-lg-4 { flex: 0 0 33.333%; max-width: 33.333%; }
+.col-lg-8 {
+    flex: 0 0 66.666%;
+    max-width: 66.666%;
+}
+.col-lg-4 {
+    flex: 0 0 33.333%;
+    max-width: 33.333%;
+}
 
 @media (max-width: 992px) {
-    .col-lg-8, .col-lg-4 {
+    .col-lg-8,
+    .col-lg-4 {
         flex: 0 0 100%;
         max-width: 100%;
     }
@@ -394,12 +547,12 @@ const formatTime = (time) => {
     gap: 2px;
 }
 
-.cell-panchang .day-name {
+.cell-panchang .nakshatra {
     color: #6366f1;
     font-weight: 600;
 }
 
-.cell-panchang .tithi {
+.cell-panchang .malayalam-date {
     color: #059669;
     font-weight: 500;
 }
@@ -494,7 +647,11 @@ const formatTime = (time) => {
 }
 
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 </style>

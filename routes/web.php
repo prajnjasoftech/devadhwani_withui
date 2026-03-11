@@ -11,6 +11,7 @@ use App\Http\Controllers\Web\MemberController;
 use App\Http\Controllers\Web\PanchangController;
 use App\Http\Controllers\Web\PoojaController;
 use App\Http\Controllers\Web\PurchaseController;
+use App\Http\Controllers\Web\ReportController;
 use App\Http\Controllers\Web\RoleController;
 use App\Http\Controllers\Web\SupplierController;
 use Illuminate\Support\Facades\Route;
@@ -128,6 +129,9 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/purchases/{id}/edit', [PurchaseController::class, 'edit'])->name('purchases.edit');
     Route::put('/purchases/{id}', [PurchaseController::class, 'update'])->name('purchases.update');
     Route::delete('/purchases/{id}', [PurchaseController::class, 'destroy'])->name('purchases.destroy');
+
+    // Reports
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

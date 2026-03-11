@@ -26,7 +26,7 @@
                     </div>
                     <select v-model="nakshatraFilter" @change="applyFilters" class="filter-select">
                         <option value="">All Nakshatras</option>
-                        <option v-for="nak in nakshatras" :key="nak" :value="nak">{{ nak }}</option>
+                        <option v-for="nak in nakshatraList" :key="nak.value" :value="nak.value">{{ nak.label }}</option>
                     </select>
                     <Link href="/devotees/create" class="btn btn-primary">
                         <i class="bi bi-plus-lg"></i> Add Devotee
@@ -60,7 +60,7 @@
                                 </td>
                                 <td>{{ devotee.devotee_phone || '-' }}</td>
                                 <td>
-                                    <span class="nakshatra-badge" v-if="devotee.nakshatra">{{ devotee.nakshatra }}</span>
+                                    <span class="nakshatra-badge" v-if="devotee.nakshatra">{{ toMalayalamNakshatra(devotee.nakshatra) }}</span>
                                     <span v-else>-</span>
                                 </td>
                                 <td>{{ devotee.trackings_count || 0 }}</td>
@@ -114,6 +114,7 @@
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { toMalayalamNakshatra, nakshatraList } from '@/utils/malayalam';
 
 const props = defineProps({
     devotees: Object,

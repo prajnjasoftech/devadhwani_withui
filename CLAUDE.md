@@ -93,6 +93,30 @@ php artisan migrate
 php artisan panchang:fetch
 ```
 
+## Frontend Utilities
+
+### Malayalam Localization
+The app displays nakshatras and Malayalam calendar months in Malayalam script (മലയാളം).
+
+**Utility file:** `resources/js/utils/malayalam.js`
+```javascript
+import { toMalayalamNakshatra, nakshatraList, malayalamMonths } from '@/utils/malayalam';
+
+// Convert English nakshatra to Malayalam
+toMalayalamNakshatra('Ashwini');  // Returns 'അശ്വതി'
+
+// Get dropdown options with both scripts
+nakshatraList;  // [{ value: 'Ashwini', label: 'അശ്വതി (Ashwini)' }, ...]
+
+// Malayalam months for Panchang calendar
+malayalamMonths;  // { 'Chingam': 'ചിങ്ങം', 'Kanni': 'കന്നി', ... }
+```
+
+**Used in:**
+- Panchang calendar (month names, nakshatra)
+- Devotee pages (nakshatra display and dropdowns)
+- Booking pages (nakshatra display and dropdowns)
+
 ## External Services
 
 - **Prokerala API**: Panchang/calendar data

@@ -120,7 +120,7 @@
                                     <i class="bi bi-telephone"></i> {{ booking.devotee.devotee_phone }}
                                 </p>
                                 <p v-if="booking.devotee?.nakshatra">
-                                    <i class="bi bi-star"></i> {{ booking.devotee.nakshatra }}
+                                    <i class="bi bi-star"></i> {{ toMalayalamNakshatra(booking.devotee.nakshatra) }}
                                 </p>
                                 <p v-if="booking.devotee?.address">
                                     <i class="bi bi-geo-alt"></i> {{ booking.devotee.address }}
@@ -167,6 +167,7 @@
 <script setup>
 import { Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { toMalayalamNakshatra } from '@/utils/malayalam';
 
 const props = defineProps({
     booking: Object

@@ -53,7 +53,7 @@
                                 <label class="form-label">Nakshatra</label>
                                 <select class="form-control" v-model="form.nakshatra">
                                     <option value="">Select nakshatra</option>
-                                    <option v-for="nak in nakshatras" :key="nak" :value="nak">{{ nak }}</option>
+                                    <option v-for="nak in nakshatraList" :key="nak.value" :value="nak.value">{{ nak.label }}</option>
                                 </select>
                             </div>
                         </div>
@@ -88,14 +88,7 @@
 import { reactive, ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-
-const nakshatras = [
-    'Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira', 'Ardra',
-    'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni',
-    'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha',
-    'Moola', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha',
-    'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati'
-];
+import { nakshatraList } from '@/utils/malayalam';
 
 const form = reactive({
     devotee_name: '',

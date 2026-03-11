@@ -15,8 +15,8 @@ class PanchangController extends Controller
 {
     public function index(): Response
     {
-        $month = request('month', now()->month);
-        $year = request('year', now()->year);
+        $month = (int) request('month', now()->month);
+        $year = (int) request('year', now()->year);
 
         // Get panchang data for the selected month
         $startDate = Carbon::create($year, $month, 1)->startOfMonth();
