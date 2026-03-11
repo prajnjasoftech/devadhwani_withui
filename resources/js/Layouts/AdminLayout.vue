@@ -21,12 +21,6 @@
                 <div class="nav-section">Management</div>
                 <ul class="p-0 mb-4">
                     <li class="nav-item">
-                        <Link href="/temples" class="nav-link" :class="{ active: isActive('/temples') }">
-                            <i class="bi bi-building"></i>
-                            <span>Temples</span>
-                        </Link>
-                    </li>
-                    <li class="nav-item">
                         <Link href="/devotees" class="nav-link" :class="{ active: isActive('/devotees') }">
                             <i class="bi bi-people"></i>
                             <span>Devotees</span>

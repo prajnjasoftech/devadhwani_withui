@@ -37,7 +37,7 @@ Route::middleware(['auth:web'])->group(function () {
 
     // Temple Profile
     Route::get('/temple/profile', [DashboardController::class, 'templeProfile'])->name('temple.profile');
-    Route::put('/temple/profile', [DashboardController::class, 'updateTempleProfile'])->name('temple.profile.update');
+    Route::match(['put', 'post'], '/temple/profile', [DashboardController::class, 'updateTempleProfile'])->name('temple.profile.update');
 
     // Members
     Route::get('/members', [MemberController::class, 'index'])->name('members.index');
