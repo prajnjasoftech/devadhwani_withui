@@ -31,6 +31,44 @@ TempleDeity (1) ──────< TemplePooja (many)
      └──────────────< TemplePoojaBooking (many)
 ```
 
+### Receipts & Payments
+Payments are tracked at the **receipt level**, not per-booking. This prevents rounding issues when multiple bookings share a payment.
+
+- **Receipt**: Groups one or more bookings, tracks total/paid/balance
+- **ReceiptPayment**: Individual payments against a receipt
+- **TemplePoojaBooking**: Links to receipt via `receipt_id`
+
+```
+Receipt (1) ─────────< TemplePoojaBooking (many)
+    │
+    └────────────────< ReceiptPayment (many)
+```
+
+**Usage:**
+```php
+// Create receipt
+$receipt = Receipt::create([
+    'temple_id' => $templeId,
+    'receipt_number' => Receipt::generateReceiptNumber($templeId),
+    'receipt_date' => now(),
+    'total_amount' => 2100,
+    'net_amount' => 2100,
+]);
+
+// Add bookings to receipt
+$booking->update(['receipt_id' => $receipt->id]);
+$receipt->recalculateTotals();
+
+// Record payment (auto-updates receipt totals)
+ReceiptPayment::create([
+    'receipt_id' => $receipt->id,
+    'amount' => 2000,
+    'payment_date' => now(),
+    'payment_mode' => 'cash',
+]);
+// receipt->balance_due is now 100, payment_status is 'partial'
+```
+
 ## Key Conventions
 
 ### API Response Format

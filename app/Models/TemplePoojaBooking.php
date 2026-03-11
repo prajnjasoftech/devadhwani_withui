@@ -31,7 +31,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property float|null $pooja_amount_receipt
  * @property float|null $pooja_amount_remaining
  * @property float|null $pooja_amount_total_received
+ * @property int|null $receipt_id
  * @property-read Temple $temple
+ * @property-read Receipt|null $receipt
  * @property-read TemplePooja $pooja
  * @property-read TempleDeity|null $deity
  * @property-read Member|null $member
@@ -51,6 +53,7 @@ class TemplePoojaBooking extends Model
         'devotee_id',
         'booking_number',
         'receipt_number',
+        'receipt_id',
         'booking_date',
         'booking_time_slot',
         'period',
@@ -116,6 +119,14 @@ class TemplePoojaBooking extends Model
     public function devotee(): BelongsTo
     {
         return $this->belongsTo(Devotee::class);
+    }
+
+    /**
+     * @return BelongsTo<Receipt, TemplePoojaBooking>
+     */
+    public function receipt(): BelongsTo
+    {
+        return $this->belongsTo(Receipt::class);
     }
 
     /**
