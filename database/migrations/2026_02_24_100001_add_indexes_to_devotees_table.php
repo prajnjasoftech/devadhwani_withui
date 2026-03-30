@@ -32,10 +32,20 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('devotees', function (Blueprint $table) {
+            // Drop foreign key first so we can drop any index on temple_id
+            $table->dropForeign(['temple_id']);
+        });
+
+        Schema::table('devotees', function (Blueprint $table) {
+            $table->dropIndex('devotees_temple_deleted_index');
             $table->dropIndex('devotees_temple_id_index');
             $table->dropIndex('devotees_devotee_name_index');
             $table->dropIndex('devotees_devotee_phone_index');
-            $table->dropIndex('devotees_temple_deleted_index');
+        });
+
+        Schema::table('devotees', function (Blueprint $table) {
+            // Re-add the foreign key (this will auto-create necessary index)
+            $table->foreign('temple_id')->references('id')->on('temples')->onDelete('cascade');
         });
     }
 };
