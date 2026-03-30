@@ -37,6 +37,18 @@ class Item extends Model
         'min_quantity' => 'decimal:2',
     ];
 
+    protected $appends = ['item_with_category'];
+
+    /**
+     * Get item name with category (e.g., "Rice - Grocery")
+     */
+    public function getItemWithCategoryAttribute(): string
+    {
+        $categoryName = $this->category?->category_name ?? '';
+
+        return $categoryName ? "{$this->item_name} - {$categoryName}" : $this->item_name;
+    }
+
     /**
      * @return BelongsTo<Category, Item>
      */

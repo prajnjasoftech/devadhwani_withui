@@ -16,7 +16,7 @@ class PurchaseController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Purchase::with(['item', 'supplier'])->latest();
+        $query = Purchase::with(['item.category', 'supplier'])->latest();
 
         if ($request->has('temple_id')) {
             $query->where('temple_id', $request->temple_id);
@@ -63,7 +63,7 @@ class PurchaseController extends Controller
                 'total_price' => $total_price,
             ]);
             $purchase = Purchase::create($purchaseData);
-            $purchase->load(['item', 'supplier']);
+            $purchase->load(['item.category', 'supplier']);
 
             // Update item stock (add quantity)
             $item = Item::findOrFail($validated['item_id']);
@@ -99,7 +99,7 @@ class PurchaseController extends Controller
      */
     public function show($id)
     {
-        $purchase = Purchase::with(['item', 'supplier'])->find($id);
+        $purchase = Purchase::with(['item.category', 'supplier'])->find($id);
 
         if (! $purchase) {
             return response()->json(['status' => false, 'error' => 'Purchase not found'], 404);
@@ -134,7 +134,7 @@ class PurchaseController extends Controller
         $validated['total_price'] = ($validated['unit_price'] ?? 0) * $validated['quantity'];
 
         $purchase->update($validated);
-        $purchase->load(['item', 'supplier']);
+        $purchase->load(['item.category', 'supplier']);
 
         PaymentDetail::where('source_id', $purchase->id)
             ->where('source', 'purchase')

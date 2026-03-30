@@ -57,16 +57,15 @@ class Temple extends Authenticatable
             return null;
         }
 
-        $path = 'public/temples/'.$this->temple_logo;
+        // Logo is stored at storage/app/public/temple_logos/
+        $path = 'public/'.$this->temple_logo;
 
         if (! Storage::exists($path)) {
             return null;
         }
 
         $file = Storage::get($path);
-        $mime = Storage::mimeType($path);
 
         return base64_encode($file);
-        // return 'data:' . $mime . ';base64,' . base64_encode($file);
     }
 }

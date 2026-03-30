@@ -131,6 +131,9 @@ class AuthController extends Controller
         // Generate Sanctum Token
         $token = $temple->createToken('temple_token')->plainTextToken;
 
+        // Append temple_logo_base64 for mobile app
+        $temple->append('temple_logo_base64');
+
         return response()->json([
             'message' => 'Temple registered successfully',
             'temple' => $temple,
@@ -178,6 +181,9 @@ class AuthController extends Controller
 
             // Issue Sanctum token
             $token = $temple->createToken('temple_token')->plainTextToken;
+
+            // Append temple_logo_base64 for mobile app
+            $temple->append('temple_logo_base64');
 
             // Default if no role found
             $roleData = [
