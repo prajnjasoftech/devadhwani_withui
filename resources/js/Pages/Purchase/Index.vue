@@ -61,7 +61,7 @@
                             <tr v-for="(purchase, index) in purchases.data" :key="purchase.id">
                                 <td>{{ (purchases.current_page - 1) * purchases.per_page + index + 1 }}</td>
                                 <td>{{ formatDate(purchase.received_date) }}</td>
-                                <td>{{ purchase.item?.item_name || '-' }}</td>
+                                <td>{{ purchase.item?.item_with_category || purchase.item?.item_name || '-' }}</td>
                                 <td>{{ purchase.supplier?.name || '-' }}</td>
                                 <td>{{ purchase.quantity }}</td>
                                 <td>{{ formatCurrency(purchase.unit_price) }}</td>

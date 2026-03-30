@@ -19,7 +19,7 @@ class PurchaseController extends Controller
     {
         $temple = auth()->user();
 
-        $query = Purchase::with(['item', 'supplier'])
+        $query = Purchase::with(['item.category', 'supplier'])
             ->where('temple_id', $temple->id);
 
         if ($request->has('search') && $request->search) {
@@ -56,7 +56,7 @@ class PurchaseController extends Controller
     public function create(): Response
     {
         $temple = auth()->user();
-        $items = Item::where('temple_id', $temple->id)->where('status', 'active')->get(['id', 'item_name', 'unit']);
+        $items = Item::with('category')->where('temple_id', $temple->id)->where('status', 'active')->get();
         $suppliers = Supplier::where('temple_id', $temple->id)->get(['id', 'name', 'type']);
 
         return Inertia::render('Purchase/Create', [
@@ -132,7 +132,7 @@ class PurchaseController extends Controller
             ->where('temple_id', $temple->id)
             ->findOrFail($id);
 
-        $items = Item::where('temple_id', $temple->id)->where('status', 'active')->get(['id', 'item_name', 'unit']);
+        $items = Item::with('category')->where('temple_id', $temple->id)->where('status', 'active')->get();
         $suppliers = Supplier::where('temple_id', $temple->id)->get(['id', 'name', 'type']);
 
         return Inertia::render('Purchase/Edit', [

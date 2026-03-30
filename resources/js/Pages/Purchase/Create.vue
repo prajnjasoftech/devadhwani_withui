@@ -30,7 +30,7 @@
                                 >
                                     <option value="">Select item</option>
                                     <option v-for="item in items" :key="item.id" :value="item.id">
-                                        {{ item.item_name }} ({{ item.unit }})
+                                        {{ item.item_with_category || item.item_name }} ({{ item.unit }})
                                     </option>
                                 </select>
                                 <div class="invalid-feedback" v-if="errors.item_id">{{ errors.item_id }}</div>
